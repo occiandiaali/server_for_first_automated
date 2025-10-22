@@ -9,6 +9,7 @@ const garmentSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
+  orderNo: { type: String, required: true },
   customer: { type: String, required: true },
   phone: { type: String, required: true },
   comment: { type: String, default: "No comment" },
