@@ -17,8 +17,10 @@ router.post("/storefront", async (req, res) => {
     res.status(400).send(error);
   }
 });
-router.get("/storefront", authMiddleware, (req, res) => {
-  res.json({ message: "Welcome to Storefront", user: req.user });
+
+router.get("/storefront", async (req, res) => {
+  const orders = await Order.find();
+  res.json(orders);
 });
 
 module.exports = router;
