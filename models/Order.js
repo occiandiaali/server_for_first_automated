@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const garmentSchema = new mongoose.Schema({
-  //{name: 'Shirt(long)', price: 400, amt: 5, subTotal: 2000}
   name: String,
   price: Number,
   amt: Number,

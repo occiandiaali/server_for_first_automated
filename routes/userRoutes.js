@@ -1,15 +1,19 @@
 const express = require("express");
-const Archive = require("../models/Archive");
 const Order = require("../models/Order");
+const Archive = require("../models/Archive");
+const Item = require("../models/Item");
 const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
+// ✅ Protected route: user profile
 router.get("/profile", authMiddleware, (req, res) => {
   res.json({ message: "Welcome to User Profile", user: req.user });
 });
 
-router.post("/storefront", async (req, res) => {
+// ✅ Create order
+router.post("/storefront", authMiddleware, async (req, res) => {
   const order = new Order(req.body);
   try {
     await order.save();
@@ -19,12 +23,14 @@ router.post("/storefront", async (req, res) => {
   }
 });
 
-router.get("/storefront", async (req, res) => {
+// ✅ Get all orders
+router.get("/storefront", authMiddleware, async (req, res) => {
   const orders = await Order.find();
   res.json(orders);
 });
 
-router.delete("/storefront/:id", async (req, res) => {
+// ✅ Delete order
+router.delete("/storefront/:id", authMiddleware, async (req, res) => {
   try {
     const result = await Order.findByIdAndDelete(req.params.id);
     if (!result) {
@@ -36,18 +42,49 @@ router.delete("/storefront/:id", async (req, res) => {
   }
 });
 
-router.post("/archive", async (req, res) => {
+// Necessary for getting list of garments in "/items"
+router.get(
+  "/items",
+  authMiddleware,
+  roleMiddleware(["admin", "user"]),
+  async (req, res) => {
+    try {
+      const items = await Item.find();
+      res.json(items); // ✅ Return actual items
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to fetch items" });
+    }
+  }
+);
+
+// ✅ Archive order
+router.post("/archive", authMiddleware, async (req, res) => {
   const { itemId } = req.body;
+  const currentMonth = new Date().getMonth();
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const monthName = monthNames[currentMonth];
 
   try {
     const item = await Order.findById(itemId);
     if (!item) return res.status(404).json({ message: "Order not found" });
 
-    // Optional: remove _id to avoid duplicate key error
     const { _id, ...itemData } = item.toObject();
-
-    const newTargetItem = new Archive(itemData);
-    await newTargetItem.save();
+    const archiveItem = new Archive({ title: monthName, content: itemData });
+    await archiveItem.save();
 
     res.status(200).json({ message: "Item archived successfully" });
   } catch (error) {

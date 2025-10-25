@@ -1,25 +1,29 @@
 const mongoose = require("mongoose");
 
 const garmentSchema = new mongoose.Schema({
-  //{name: 'Shirt(long)', price: 400, amt: 5, subTotal: 2000}
   name: String,
   price: Number,
   amt: Number,
   subTotal: Number,
 });
 
-const archiveSchema = new mongoose.Schema({
-  orderNo: { type: String, required: true },
-  customer: { type: String, required: true },
-  phone: { type: String, required: true },
-  comment: { type: String, default: "No comment" },
-  garments: { type: [garmentSchema], required: true },
-  dropOff: { type: String, required: true },
-  due: { type: String, required: true },
-  totalDue: { type: Number, required: true },
-  pickupPoint: { type: String, required: true },
+const orderArchiveSchema = new mongoose.Schema({
+  orderNo: { type: String },
+  customer: { type: String },
+  phone: { type: String },
+  comment: { type: String },
+  garments: { type: [garmentSchema] },
+  dropOff: { type: String },
+  due: { type: String },
+  totalDue: { type: Number },
+  pickupPoint: { type: String },
 
   // createdAt: { type: Date, default: Date.now }, // Sets current date as default
+});
+
+const archiveSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  content: { type: orderArchiveSchema, required: true },
 });
 
 module.exports = mongoose.model("Archive", archiveSchema);

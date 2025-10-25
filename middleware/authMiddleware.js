@@ -1,21 +1,20 @@
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
-const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+function authMiddleware(req, res, next) {
+  const token = req.cookies.token;
 
   if (!token) {
-    return res
-      .status(404)
-      .json({ message: "Access Denied, No Token Provided" });
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // Attach user info to request
     next();
   } catch (error) {
-    return res.status(403).json({ message: "Invalid or Expired Token" });
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
-};
+}
 
 module.exports = authMiddleware;

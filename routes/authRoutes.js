@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const router = express.Router();
 
-// **REGISTER USER** SIGNUP
+// ✅ REGISTER USER
 router.post("/register", async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
@@ -27,24 +27,17 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// **LOGIN USER**
+// ✅ LOGIN USER
 router.post("/login", async (req, res) => {
   try {
-    console.log("📩 Request received:", req.body); // Log incoming data
-
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
     if (!user) {
-      console.log("❌ User not found in DB");
       return res.status(401).json({ message: "User not found" });
     }
 
-    console.log("✅ User found:", user);
-
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("🔑 Password match status:", isMatch); // Log match result
-
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid password" });
     }
@@ -55,16 +48,57 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    console.log("✅ Token generated:", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, // set to true in production with HTTPS
+      sameSite: "strict",
+      maxAge: 3600000, // 1 hour
+    });
 
-    // res.json({ message: "Login successful", token });
-    res
-      .status(200)
-      .send({ message: "Login successful", jwt: token, currentUser: user });
+    res.json({
+      message: "Login successful",
+      user: {
+        username: user.username,
+        role: user.role,
+      },
+    });
   } catch (error) {
-    console.error("🚨 Error:", error);
+    console.error("🚨 Login error:", error);
     res.status(500).json({ message: "Error logging in", error: error.message });
   }
+});
+
+// ✅ CHECK AUTH STATUS
+router.get("/check", (req, res) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ authenticated: false });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({
+      authenticated: true,
+      user: {
+        username: decoded.username,
+        role: decoded.role,
+      },
+    });
+  } catch (error) {
+    res.status(401).json({ authenticated: false });
+  }
+});
+
+// ✅ LOGOUT USER
+router.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: false, // match login cookie settings
+    sameSite: "strict",
+  });
+
+  res.json({ message: "Logged out successfully" });
 });
 
 module.exports = router;

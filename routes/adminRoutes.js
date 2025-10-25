@@ -3,22 +3,70 @@ const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const User = require("../models/User");
 const Item = require("../models/Item");
+const Archive = require("../models/Archive");
 
 const router = express.Router();
 
+// Logging user info
+//console.log(`🔐 ${req.user.username} accessed ${req.originalUrl}`);
+
 router.get(
-  "/dashboard",
+  "/archive",
   authMiddleware,
   roleMiddleware("admin"),
-  (req, res) => {
-    res.json({ message: "Welcome to Dashboard", user: req.user });
+  async (req, res) => {
+    try {
+      const archives = await Archive.find();
+      res.json(archives);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch archives" });
+    }
+  }
+);
+// ✅ Archive order
+router.post(
+  "/archive",
+  authMiddleware,
+  roleMiddleware(["admin", "user"]),
+  async (req, res) => {
+    const { itemId } = req.body;
+    const currentMonth = new Date().getMonth();
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const monthName = monthNames[currentMonth];
+
+    try {
+      const item = await Order.findById(itemId);
+      if (!item) return res.status(404).json({ message: "Order not found" });
+
+      const { _id, ...itemData } = item.toObject();
+      const archiveItem = new Archive({ title: monthName, content: itemData });
+      await archiveItem.save();
+
+      res.status(200).json({ message: "Item archived successfully" });
+    } catch (error) {
+      console.error("Error archiving item:", error);
+      res.status(500).json({ message: "Server error" });
+    }
   }
 );
 
 router.get(
   "/staff",
-  // authMiddleware,
-  // roleMiddleware("admin"),
+  authMiddleware,
+  roleMiddleware("admin"),
   async (req, res) => {
     try {
       const staff = await User.find();
@@ -28,34 +76,38 @@ router.get(
     }
   }
 );
-router.post("/items", async (req, res) => {
-  try {
-    const { itemName, qty, itemPrice, checked } = req.body;
-    const item = new Item({ itemName, qty, itemPrice, checked });
-    await item.save();
-    res.status(201).json({ message: "Item successfully added!" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error adding this item..", error });
+router.post(
+  "/items",
+  authMiddleware,
+  roleMiddleware("admin"),
+  async (req, res) => {
+    try {
+      const { itemName, qty, itemPrice, checked } = req.body;
+      const item = new Item({ itemName, qty, itemPrice, checked });
+      await item.save();
+      res.status(201).json({ message: "Item successfully added!" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error adding this item..", error });
+    }
   }
-});
+);
 
 router.get(
   "/items",
-  // authMiddleware,
-  // roleMiddleware("admin"),
+  authMiddleware,
+  roleMiddleware(["admin", "user"]),
   async (req, res) => {
     try {
       const items = await Item.find();
-      res.json(items);
-      console.log("get/items", items);
-      //res.json({ message: "Welcome to Items Dashboard", user: req.user });
+      res.json(items); // ✅ Return actual items
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Failed to fetch items" });
     }
   }
 );
+
 router.get(
   "/customers",
   authMiddleware,
