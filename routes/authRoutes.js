@@ -4,28 +4,41 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 require("dotenv").config();
 
+const roleMiddleware = require("../middleware/roleMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
+
 const router = express.Router();
 
 // ✅ REGISTER USER
-router.post("/register", async (req, res) => {
-  try {
-    const { username, email, password, role } = req.body;
+router.post(
+  "/register",
+  authMiddleware,
+  roleMiddleware("admin"),
+  async (req, res) => {
+    try {
+      const { username, email, password, role } = req.body;
 
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists!" });
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists!" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = new User({
+        username,
+        email,
+        password: hashedPassword,
+        role,
+      });
+
+      await user.save();
+
+      res.status(201).json({ message: "User Registered Successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Error Registering the user", error });
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, email, password: hashedPassword, role });
-
-    await user.save();
-
-    res.status(201).json({ message: "User Registered Successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Error Registering the user", error });
   }
-});
+);
 
 // ✅ LOGIN USER
 router.post("/login", async (req, res) => {

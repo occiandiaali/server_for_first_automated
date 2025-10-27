@@ -1,4 +1,5 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const User = require("../models/User");
@@ -73,6 +74,41 @@ router.get(
       res.json(staff);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch staff" });
+    }
+  }
+);
+
+router.put(
+  "/staff/:id",
+  authMiddleware,
+  roleMiddleware("admin"),
+  async (req, res) => {
+    try {
+      const updatedStaff = await User.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+      );
+      res.json(updatedStaff);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error updating this staff..", error });
+    }
+  }
+);
+router.delete(
+  "/staff/:id",
+  authMiddleware,
+  roleMiddleware("admin"),
+  async (req, res) => {
+    try {
+      const deletedStaff = await User.findByIdAndDelete(req.params.id);
+      res.json(deletedStaff);
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ message: "Error deleting this staff entry", error });
     }
   }
 );
