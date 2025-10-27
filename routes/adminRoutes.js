@@ -93,6 +93,25 @@ router.post(
   }
 );
 
+router.put(
+  "/items/:id",
+  authMiddleware,
+  roleMiddleware("admin"),
+  async (req, res) => {
+    try {
+      const updatedItem = await Item.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+      );
+      res.json(updatedItem);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error editing this item..", error });
+    }
+  }
+);
+
 router.get(
   "/items",
   authMiddleware,
