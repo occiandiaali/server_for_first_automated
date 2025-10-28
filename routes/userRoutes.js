@@ -1,7 +1,9 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
 const Order = require("../models/Order");
 const Archive = require("../models/Archive");
 const Item = require("../models/Item");
+const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 
@@ -10,6 +12,21 @@ const router = express.Router();
 // ✅ Protected route: user profile
 router.get("/profile", authMiddleware, (req, res) => {
   res.json({ message: "Welcome to User Profile", user: req.user });
+});
+// ✅ Password reset
+router.patch("/change-default-password", authMiddleware, async (req, res) => {
+  const { userId, newPassword } = req.body;
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).send("User not found");
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.status(200).send("Password updated successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server error");
+  }
 });
 
 // ✅ Create order
