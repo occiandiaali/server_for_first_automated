@@ -19,7 +19,7 @@ app.use(cookieParser());
 // ✅ CORS setup to allow credentials (cookies) from frontend
 app.use(
   cors({
-    origin: "http://localhost:9000", // your frontend origin
+    origin: ["http://localhost:9000", "https://first-automated.onrender.com"], // your frontend origin
     credentials: true, // allow cookies to be sent
   })
 );
