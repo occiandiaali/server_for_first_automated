@@ -75,14 +75,14 @@ router.post(
   async (req, res) => {
     try {
       const { monthlyTotals } = req.body;
-      const updatedYear = await YearlyRevenue.findOneAndReplace(
+      const updatedYearRevenue = await YearlyRevenue.findOneAndUpdate(
         { year: currentYearString },
-        { revenueArray: monthlyTotals },
-        { new: true, upsert: true }
+        { year: currentYearString, revenueArray: monthlyTotals },
+        { upsert: true, new: true }
       );
-      console.log("Upsert updatedYear ", updatedYear);
+      console.log("Upsert updatedYear ", updatedYearRevenue);
 
-      res.status(200).json({ message: "Revenues posted successfully" });
+      res.status(200).json(updatedYearRevenue);
     } catch (error) {
       console.error(error);
     }
