@@ -9,6 +9,8 @@ const YearlyRevenue = require("../models/YearlyRevenue");
 
 const router = express.Router();
 
+const currentYearString = new Date().getFullYear().toString();
+
 // Logging user info
 //console.log(`🔐 ${req.user.username} accessed ${req.originalUrl}`);
 
@@ -66,17 +68,26 @@ router.post(
 );
 
 // ✅ YoY revenue array, by month
+const updatedUser = await User.findOneAndUpdate(
+  { email: "example@example.com" },
+  { age: 30 },
+  { new: true }
+);
+
 router.post(
   "/year-revenue",
   authMiddleware,
   roleMiddleware("admin"),
   async (req, res) => {
     try {
-      const yearly = new YearlyRevenue({
-        revenueArray: req.body.monthlyTotals,
-        year: new Date().getFullYear().toString(),
-      });
-      await yearly.save();
+      const { monthlyTotals } = req.body;
+      const updatedYear = await YearlyRevenue.findOneAndReplace(
+        { year: currentYearString },
+        { revenueArray: monthlyTotals },
+        { new: true, upsert: true }
+      );
+      console.log("Upsert updatedYear ", updatedYear);
+
       res.status(200).json({ message: "Revenues posted successfully" });
     } catch (error) {
       console.error(error);
