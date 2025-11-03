@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
+const Order = require("../models/Order");
 const User = require("../models/User");
 const Item = require("../models/Item");
 const Archive = require("../models/Archive");
@@ -73,19 +74,31 @@ router.post(
   authMiddleware,
   roleMiddleware("admin"),
   async (req, res) => {
+    const { itemId, year, monthlyTotals } = req.body;
     try {
+      const item = await YearlyRevenue.findById(itemId);
+      if (!item) {
+        const yearRev = new YearlyRevenue({
+          revenueArray: monthlyTotals,
+          year,
+        });
+        await yearRev.save();
+        res.status(200).json({ message: "Year revenue created!" });
+        //  return res.status(404).json({ message: "Item not found" });
+      }
       // const { monthlyTotals } = req.body;
       // const updatedYearRevenue = await YearlyRevenue.findOneAndUpdate(
       //   { year: currentYearString },
       //   { year: currentYearString, revenueArray: monthlyTotals },
       //   { upsert: true, new: true }
       // );
+      const { _id, ...itemData } = item.toObject();
       const yearRev = new YearlyRevenue({
-        revenueArray: req.body.monthlyTotals,
-        year: currentYearString,
+        revenueArray: itemData.revenueArray,
+        year: itemData.year,
       });
       await yearRev.save();
-      res.status(201).send(yearRev);
+      res.status(201).json({ message: "Year revenue posted!" });
       // console.log("Upsert updatedYear ", updatedYearRevenue);
       // res.status(200).json(updatedYearRevenue);
     } catch (error) {
