@@ -85,6 +85,14 @@ router.post(
         await yearRev.save();
         res.status(200).json({ message: "Year revenue created!" });
         //  return res.status(404).json({ message: "Item not found" });
+      } else {
+        const { _id, ...itemData } = item.toObject();
+        const yearRev = new YearlyRevenue({
+          revenueArray: itemData.revenueArray,
+          year: itemData.year,
+        });
+        await yearRev.save();
+        res.status(201).json({ message: "Year revenue posted!" });
       }
       // const { monthlyTotals } = req.body;
       // const updatedYearRevenue = await YearlyRevenue.findOneAndUpdate(
@@ -92,13 +100,7 @@ router.post(
       //   { year: currentYearString, revenueArray: monthlyTotals },
       //   { upsert: true, new: true }
       // );
-      const { _id, ...itemData } = item.toObject();
-      const yearRev = new YearlyRevenue({
-        revenueArray: itemData.revenueArray,
-        year: itemData.year,
-      });
-      await yearRev.save();
-      res.status(201).json({ message: "Year revenue posted!" });
+
       // console.log("Upsert updatedYear ", updatedYearRevenue);
       // res.status(200).json(updatedYearRevenue);
     } catch (error) {
