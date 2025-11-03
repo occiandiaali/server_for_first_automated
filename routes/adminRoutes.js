@@ -74,15 +74,20 @@ router.post(
   roleMiddleware("admin"),
   async (req, res) => {
     try {
-      const { monthlyTotals } = req.body;
-      const updatedYearRevenue = await YearlyRevenue.findOneAndUpdate(
-        { year: currentYearString },
-        { year: currentYearString, revenueArray: monthlyTotals },
-        { upsert: true, new: true }
-      );
-      console.log("Upsert updatedYear ", updatedYearRevenue);
-
-      res.status(200).json(updatedYearRevenue);
+      // const { monthlyTotals } = req.body;
+      // const updatedYearRevenue = await YearlyRevenue.findOneAndUpdate(
+      //   { year: currentYearString },
+      //   { year: currentYearString, revenueArray: monthlyTotals },
+      //   { upsert: true, new: true }
+      // );
+      const yearRev = new YearlyRevenue({
+        revenueArray: req.body.monthlyTotals,
+        year: currentYearString,
+      });
+      await yearRev.save();
+      res.status(201).send(yearRev);
+      // console.log("Upsert updatedYear ", updatedYearRevenue);
+      // res.status(200).json(updatedYearRevenue);
     } catch (error) {
       console.error(error);
     }
