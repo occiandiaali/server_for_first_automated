@@ -68,12 +68,6 @@ router.post(
 );
 
 // ✅ YoY revenue array, by month
-const updatedUser = await User.findOneAndUpdate(
-  { email: "example@example.com" },
-  { age: 30 },
-  { new: true }
-);
-
 router.post(
   "/year-revenue",
   authMiddleware,
