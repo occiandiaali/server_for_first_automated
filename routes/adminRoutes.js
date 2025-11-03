@@ -70,58 +70,69 @@ router.post(
 
 // ✅ YoY revenue array, by month
 router.post(
-  "/year-revenue",
+  "/yearly-revenue",
   authMiddleware,
   roleMiddleware("admin"),
   async (req, res) => {
-    const { itemId, year, monthlyTotals } = req.body;
-    try {
-      const item = await YearlyRevenue.findById(itemId);
-      if (!item) {
-        const yearRev = new YearlyRevenue({
-          revenueArray: monthlyTotals,
-          year,
-        });
-        await yearRev.save();
-        res.status(200).json({ message: "Year revenue created!" });
-        //  return res.status(404).json({ message: "Item not found" });
-      } else {
-        const { _id, ...itemData } = item.toObject();
-        const yearRev = new YearlyRevenue({
-          revenueArray: itemData.revenueArray,
-          year: itemData.year,
-        });
-        await yearRev.save();
-        res.status(201).json({ message: "Year revenue posted!" });
-      }
-      // const { monthlyTotals } = req.body;
-      // const updatedYearRevenue = await YearlyRevenue.findOneAndUpdate(
-      //   { year: currentYearString },
-      //   { year: currentYearString, revenueArray: monthlyTotals },
-      //   { upsert: true, new: true }
-      // );
+    const { revenue } = req.body;
 
-      // console.log("Upsert updatedYear ", updatedYearRevenue);
-      // res.status(200).json(updatedYearRevenue);
-    } catch (error) {
-      console.error(error);
+    if (!Array.isArray(revenue) || revenue.length !== 12) {
+      return res
+        .status(400)
+        .json({ error: "Revenue must be an array of 12 numbers" });
+    }
+
+    const currentYear = new Date().getFullYear().toString();
+
+    try {
+      const existing = await YearlyRevenue.findOne({ year: currentYear });
+
+      if (existing) {
+        existing.revenue = revenue;
+        await existing.save();
+        return res.json({
+          message: "Revenue updated for current year",
+          data: existing,
+        });
+      }
+
+      // Prevent overwriting past years
+      const pastYear = await YearlyRevenue.findOne({
+        year: { $ne: currentYear },
+      });
+      if (pastYear) {
+        return res
+          .status(403)
+          .json({ error: "Cannot overwrite revenue for past years" });
+      }
+
+      // Create new document for current year
+      const created = await YearlyRevenue.create({
+        year: currentYear,
+        revenue,
+      });
+      return res.json({
+        message: "Revenue created for current year",
+        data: created,
+      });
+    } catch (err) {
+      res.status(500).json({ error: "Server error", details: err.message });
     }
   }
 );
 
 router.get(
-  "/year-revenue",
+  "/yearly-revenue",
   authMiddleware,
   roleMiddleware("admin"),
   async (req, res) => {
     try {
-      const yearly = await YearlyRevenue.find();
-      res.json(yearly);
-      // if (yearly.year === new Date().getFullYear().toString()) {
-      //   res.json(yearly.data)
-      // }
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch yearly revenues" });
+      const allRevenue = await YearlyRevenue.find({});
+      res.json({ data: allRevenue });
+    } catch (err) {
+      res
+        .status(500)
+        .json({ error: "Failed to fetch revenue data", details: err.message });
     }
   }
 );
