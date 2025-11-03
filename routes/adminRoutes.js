@@ -5,6 +5,7 @@ const roleMiddleware = require("../middleware/roleMiddleware");
 const User = require("../models/User");
 const Item = require("../models/Item");
 const Archive = require("../models/Archive");
+const YearlyRevenue = require("../models/YearlyRevenue");
 
 const router = express.Router();
 
@@ -60,6 +61,40 @@ router.post(
     } catch (error) {
       console.error("Error archiving item:", error);
       res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+// ✅ YoY revenue array, by month
+router.post(
+  "/year-revenue",
+  authMiddleware,
+  roleMiddleware("admin"),
+  async (req, res) => {
+    try {
+      const yearArray = new YearlyRevenue({
+        revenueArray: req.body.monthlyTotals,
+        year: new Date().getFullYear().toString(),
+      });
+      await yearArray.save();
+      res.status(201).send(numberArray);
+    } catch (error) {}
+  }
+);
+
+router.get(
+  "/year-revenue",
+  authMiddleware,
+  roleMiddleware("admin"),
+  async (req, res) => {
+    try {
+      const yearly = await YearlyRevenue.find();
+      res.json(yearly);
+      // if (yearly.year === new Date().getFullYear().toString()) {
+      //   res.json(yearly.data)
+      // }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch archives" });
     }
   }
 );

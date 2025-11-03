@@ -108,8 +108,8 @@ router.get("/check", (req, res) => {
 router.post("/logout", (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false, // match login cookie settings
-    sameSite: "strict",
+    secure: true, // match login cookie settings
+    sameSite: "None",
   });
 
   res.json({ message: "Logged out successfully" });
