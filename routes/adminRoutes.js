@@ -72,11 +72,11 @@ router.post(
   roleMiddleware("admin"),
   async (req, res) => {
     try {
-      const yearArray = new YearlyRevenue({
+      const yearly = new YearlyRevenue({
         revenueArray: req.body.monthlyTotals,
         year: new Date().getFullYear().toString(),
       });
-      await yearArray.save();
+      await yearly.save();
       res.status(200).json({ message: "Revenues posted successfully" });
     } catch (error) {
       console.error(error);
