@@ -77,8 +77,10 @@ router.post(
         year: new Date().getFullYear().toString(),
       });
       await yearArray.save();
-      res.status(201).send(numberArray);
-    } catch (error) {}
+      res.status(200).json({ message: "Revenues posted successfully" });
+    } catch (error) {
+      console.error(error);
+    }
   }
 );
 
@@ -94,7 +96,7 @@ router.get(
       //   res.json(yearly.data)
       // }
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch archives" });
+      res.status(500).json({ error: "Failed to fetch yearly revenues" });
     }
   }
 );
